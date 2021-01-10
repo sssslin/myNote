@@ -1,5 +1,7 @@
 # acwing算法基础课刷视频进度
 
+前情提要：**算法需要熟记算法模板，相对的，数据结构，需要记住其基本增删改查操作，这个是非常重要的，如果不记住数据结构的基本实现方式，则不可能做出相应的题目。**
+
 
 
 ## 基础算法3节
@@ -233,9 +235,321 @@ sum[n] = a<sub>1</sub> + a<sub>2</sub> + a<sub>3</sub>+ .... a<sub>m-1</sub> + a
 
 sum[m] [n] = a[m] [n] + sum[m-1] [n] + sum[m] [n-1] - sum[m-1] [n-1]
 
+
+
+# 差分数组（一维）
+
+概念：将数列中的每一项分别与前一项数做差
+
+差分数组的作用：对一个数组区间内的元素进行加减，达到O(1)的复杂度
+
+
+
+性质：
+
+- 差分序列求前缀和可得原序列
+
+- 将原序列区间[L,R]中的元素全部+1，可以转化操作为差分序列L处+1，R+1处-1
+
+- 按照性质2得到，每次修改原序列一个区间+1，那么每次差分序列修改处增加的和减少的相同
+
+  
+
+  性质二说明
+
+  a【l】= d【1】+ d 【2】+ …+d【l】,当d[l] + c，a[l]以及a[l]之后由于包含d[l],所以会自动加c，为了避免后续所有数据都加C，所以要在R+1处-c,让R之后的数据回归正常 （具体讲解见，acwing基础算法2,1:50:00处）
+
+
+
+
+## 基础算法第三节
+
+### 双指针
+
+(0-1:00:00小时)
+
+做双指针的题目的时候，首先想一下，暴力的做法是怎么样的，然后再去分析其中的单调性规律，通过这个规律去优化代码，从而将O(n^2)的复杂度降低到O(n).
+
+常见问题分类：
+		(1) 对于一个序列，用两个指针维护一段区间
+		(2) 对于两个序列，维护某种次序，比如归并排序中合并两个有序序列的操作
+
+前提：
+
+绝大部分情况下，要求数组有序
+
+
+
+分类
+
+- 左右端点指针
+  - 二分查找
+  - 暴力枚举中“从大到小枚举”（剪枝）
+  - 有序数组
+- 快慢指针
+  - 判断链表是否有环
+  - 读写指针，典型的是`删除重复元素`
+- 固定间距指针
+  - 一次遍历求链表的中点
+  - 一次遍历求链表的倒数第K个元素
+  - 固定窗口的滑动窗口
+
+伪代码
+
+```java
+// 快慢指针
+l = 0
+r = 0
+while 没有遍历完
+  if 一定条件
+    l += 1
+  r += 1
+return 合适的值
+```
+
+```java
+// 左右端点指针
+l = 0
+r = n - 1
+while l < r
+  if 找到了
+    return 找到的值
+  if 一定条件1
+    l += 1
+  else if  一定条件2
+    r -= 1
+return 没找到
+```
+
+```java
+// 固定间距指针
+l = 0
+r = k
+while 没有遍历完
+  自定义逻辑
+  l += 1
+  r += 1
+return 合适的值
+```
+
+
+
+双指针代码模板
+
+```java
+for (int i = 0, j = 0; i < n; i ++ )
+{
+	while (j < i && check(i, j)) j ++ ;
+	
+	// 具体问题的逻辑
+}
+```
+
+
+
+### 位运算
+
+ 求n的第k位数字: n >> k & 1
+ 返回n的最后一位1：lowbit(n) = n & -n
+
+1. 取反（NOT）
+2. 按位或（OR）
+3. 按位异或（XOR）
+4. 按位与（AND）
+5. 移位: 是一个二元运算符，用来将一个二进制数中的每一位全部都向一个方向移动指定位，溢出的部分将被舍弃，而空缺的部分填入一定的值。
+
+
+
+参考资料：
+
+[Bit Twiddling Hacks (stanford.edu)](http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogIEEE64Float)
+
+
+
+#### 离散化
+
+离散化的核心思想：将分布大却数量少(即稀疏)的数据进行集中化的处理，减少空间复杂度
+
+其实个人理解就是hash的思想。
+
+
+
+离散化的两种思想和代码实现
+
+- 包含重复元素，并且相同元素离散化后也要相同
+
+```java
+public class Discretization {
+    public static int lower_bound(int[] arr,int target){ //找到第一个大于等于x的数的位置
+        int l=0;
+        int r=arr.length;
+        while (l<r){
+            int mid=l+(r-l)/2;
+            if(arr[mid]>=target){
+                r=mid;
+            }else{
+                l=mid+1;
+            }
+        }
+        return l==arr.length?-1:l;
+    }
+    public static int[] solve(int[] array){
+        SortedSet<Integer> set=new TreeSet<Integer>();
+        //利用TreeSet可以同时实现排序和去重 可以代替c++中的unique实现
+        for(int i=0;i<array.length;++i){
+            set.add(array[i]);
+        }
+        //Integer[] b=(Integer[])set.toArray();
+        int[] b=new int[set.size()]; //将去重排序的数组赋值给b数组
+        int ct=0;
+        for(int cur:set){
+            b[ct++]=cur;
+        }
+        for(int i=0;i<array.length;++i){
+            array[i]=lower_bound(b,array[i])+1; //利用lower_bound找到该数值的排位(rank)
+            //排名代表大小 越前越小 越后越大
+        }
+        //10000000,2,2,123123213离散化成2,1,1,3
+        return array;
+    }
+    public static void main(String[] args) {
+        int[] a={10000000,2,2,123123213};
+        solve(a);
+    }
+}
+```
+
+- 包含重复元素，并且相同元素离散化后不相同
+- 不包含重复元素，并且不同元素离散化后不同
+
+
+
+```java
+public class Discretization {
+    static class Node implements Comparable<Node>{
+        int rt;
+        int idx;
+        public Node(int rt, int idx) {
+            this.rt = rt;
+            this.idx = idx;
+        }
+        @Override
+        public int compareTo(Node node) {
+            return rt-node.rt;
+        }
+    }
+    public static void work(int[] array){
+        int[] rank=new int[array.length];
+        Node[] nodes=new Node[array.length];
+        for(int i=0;i<array.length;++i){
+            nodes[i]=new Node(array[i],i); //传入数值和坐标
+        }
+        java.util.Arrays.sort(nodes); //排序 记得实现Comparable接口 以rt大小排序
+        for(int i=0;i<array.length;++i){
+            rank[nodes[i].idx]=i;
+        }
+        for(int i=0;i<array.length;++i){
+            array[i]=rank[i]+1; 
+        }
+        //10000000,2,2,123123213 离散化成 3 1 2 4
+    }
+    public static void main(String[] args) {
+        int[] a={10000000,2,2,123123213};
+        work(a);
+    }
+
+}
+```
+
+y总C++模板
+
+```c++
+	vector<int> alls; // 存储所有待离散化的值
+	sort(alls.begin(), alls.end()); // 将所有值排序
+	alls.erase(unique(alls.begin(), alls.end()), alls.end());	// 去掉重复元素
+	
+	// 二分求出x对应的离散化的值
+	int find(int x)
+	{
+		int l = 0, r = alls.size() - 1;
+		while (l < r)
+		{
+			int mid = l + r >> 1;
+			if (alls[mid] >= x) r = mid;
+			else l = mid + 1;
+		}
+		return r + 1;
+	}
+```
+
+
+
+#### 区间合并
+
+用途：将有交集的两个区间合并
+
+
+
+#### 方法
+
+（1）按照区间左端点进行排序
+（2）指针st和ed维护当前区间，对区间进行扫描，扫描的下一区间（有三种情况）与当前区间有如下关系
+
+![](D:\DownloadAndData\private\Java\myNote\markdown\basic\1007_7115e53e3d-区间合并.png)
+
+
+
+```c++
+	// 将所有存在交集的区间合并
+	void merge(vector<PII> &segs)
+	{
+		vector<PII> res;
+
+		sort(segs.begin(), segs.end());
+
+		int st = -2e9, ed = -2e9;
+		for (auto seg : segs)
+			if (ed < seg.first)
+			{
+				if (st != -2e9) res.push_back({st, ed});
+				st = seg.first, ed = seg.second;
+			}
+			else ed = max(ed, seg.second);
+
+		if (st != -2e9) res.push_back({st, ed});
+
+		segs = res;
+	}
+```
+
+```python
+# intervals 形如 [[1,3],[2,6]...]
+def merge(intervals):
+    if not intervals: return []
+    # 按区间的 start 升序排列
+    intervals.sort(key=lambda intv: intv[0])
+    res = []
+    res.append(intervals[0])
+    for i in range(1, len(intervals)):
+        curr = intervals[i]
+        # res 中最后一个元素的引用
+        last = res[-1]
+        if curr[0] <= last[1]:
+            # 找到最大的 end
+            last[1] = max(last[1], curr[1])
+        else:
+            # 处理下一个待合并区间
+            res.append(curr)
+    return res
+```
+
+
+
+
+
 ## 基础数据结构3节
 
-第一节核心内容（已刷一遍）
+### 第一节核心内容（已刷一遍）
 
 单调栈、单调队列以及KMP算法，如何从朴素的算法优化出来的
 
@@ -245,13 +559,90 @@ sum[m] [n] = a[m] [n] + sum[m-1] [n] + sum[m] [n-1] - sum[m-1] [n-1]
 
 kmp算法和核心的next数组
 
+代码实现的问题
+
+https://www.bilibili.com/video/BV1jb411V78H?from=search&seid=789489790236522154
 
 
-## 搜索与图论3节
+
+### 第二节内容
+
+### Tries树
+
+0:00:00 
+
+概念：Trie树，又称字典树，单词查找树或者前缀树，是一种用于快速检索的多叉树结构，如英文字母的字典树是一个26叉树，数字的字典树是一个10叉树。
 
 
 
-## 数学知识4节
+### 应用场景
+
+- 字符串检索
+
+- 字符串最长公共前缀
+
+- 字符串搜索的前缀匹配
+
+- 作为其他数据结构和算法的辅助结构
+- 词频统计
+- 排序
+
+
+
+###  并查集
+
+0:40:00 
+
+定义：并查集(Disjoint-Set)是一种可以动态维护若干个不重叠的集合，并支持*合并*与*查询*两种操作的一种数据结构。
+
+
+
+基本操作：
+
+1. 合并(Union/Merge)：合并两个集合。
+2. 查询(Find/Get)：查询元素所属集合。
+
+
+
+应用场景：
+
+- 网络连接判断
+- 变量名等同性（类似于指针的概念）
+
+
+
+优化方法：
+
+- 按秩合并
+- 路径压缩
+
+参考资料：https://www.cnblogs.com/MrSaver/p/9607552.html
+
+
+
+### 堆
+
+01:09:00 开始讲
+
+- 如何手写一个堆
+
+  - 插入一个数
+
+  - 求集合当中的最小值
+
+  - 删除最小值
+
+  - 删除任意一个数
+
+  - 修改任意一个数
+
+    
+
+## 搜索与图论3节（3*2 =6天）
+
+
+
+## 数学知识4节（4*2 = 8天）
 
 
 
@@ -269,3 +660,6 @@ kmp算法和核心的next数组
 
 ## 习题课8节
 
+
+
+学算法到底学的是什么东西呢？除了学到具体的算法，我觉得更多的是体会算法的思想和思路，代码的优化过程。以及编码习惯等等。
