@@ -569,9 +569,50 @@ https://www.bilibili.com/video/BV1jb411V78H?from=search&seid=789489790236522154
 
 ### Tries树
 
-0:00:00 
+0:00:00 ----26:00:00
 
 概念：Trie树，又称字典树，单词查找树或者前缀树，是一种用于快速检索的多叉树结构，如英文字母的字典树是一个26叉树，数字的字典树是一个10叉树。
+
+用处：高效的存储和查找字符串集合的数据结构
+
+
+
+模板
+
+```c++
+1. Trie树
+
+	int son[N][26], cnt[N], idx;
+	// 0号点既是根节点，又是空节点
+	// son[][]存储树中每个节点的子节点
+	// cnt[]存储以每个节点结尾的单词数量
+
+	// 插入一个字符串
+	void insert(char *str)
+	{
+		int p = 0;
+		for (int i = 0; str[i]; i ++ )
+		{
+			int u = str[i] - 'a';
+			if (!son[p][u]) son[p][u] = ++ idx;
+			p = son[p][u];
+		}
+		cnt[p] ++ ;
+	}
+
+	// 查询字符串出现的次数
+	int query(char *str)
+	{
+		int p = 0;
+		for (int i = 0; str[i]; i ++ )
+		{
+			int u = str[i] - 'a';
+			if (!son[p][u]) return 0;
+			p = son[p][u];
+		}
+		return cnt[p];
+	}
+```
 
 
 
@@ -591,7 +632,7 @@ https://www.bilibili.com/video/BV1jb411V78H?from=search&seid=789489790236522154
 
 ###  并查集
 
-0:40:00 
+0:26:00 
 
 定义：并查集(Disjoint-Set)是一种可以动态维护若干个不重叠的集合，并支持*合并*与*查询*两种操作的一种数据结构。
 
@@ -599,8 +640,10 @@ https://www.bilibili.com/video/BV1jb411V78H?from=search&seid=789489790236522154
 
 基本操作：
 
-1. 合并(Union/Merge)：合并两个集合。
-2. 查询(Find/Get)：查询元素所属集合。
+1. 合并(Union/Merge)：将两个集合合并。
+2. 查询(Find/Get)：询问两个元素是否在集合当中。
+
+在近乎O(1)的复杂度完成以上两个操作
 
 
 
@@ -611,10 +654,90 @@ https://www.bilibili.com/video/BV1jb411V78H?from=search&seid=789489790236522154
 
 
 
+并查集代码的核心是：find
+
+朴素并查集
+
+```c++
+int p[N]; //存储每个点的祖宗节点
+
+		// 返回x的祖宗节点
+		int find(int x)
+		{
+			if (p[x] != x) p[x] = find(p[x]);
+			return p[x];
+		}
+
+		// 初始化，假定节点编号是1~n
+		for (int i = 1; i <= n; i ++ ) p[i] = i;
+
+		// 合并a和b所在的两个集合：
+		p[find(a)] = find(b);
+```
+
+维护size的并查集：
+
+```c++
+int p[N], size[N];
+		//p[]存储每个点的祖宗节点, size[]只有祖宗节点的有意义，表示祖宗节点所在集合中的点的数量
+
+		// 返回x的祖宗节点
+		int find(int x)
+		{
+			if (p[x] != x) 
+                // 路径压缩
+                p[x] = find(p[x]);
+			return p[x];
+		}
+
+		// 初始化，假定节点编号是1~n
+		for (int i = 1; i <= n; i ++ )
+		{
+			p[i] = i;
+			size[i] = 1;
+		}
+
+		// 合并a和b所在的两个集合：
+		p[find(a)] = find(b);
+		size[b] += size[a];
+```
+
+维护到祖宗节点距离的并查集
+
+```c++
+int p[N], d[N];
+		//p[]存储每个点的祖宗节点, d[x]存储x到p[x]的距离
+
+		// 返回x的祖宗节点
+		int find(int x)
+		{
+			if (p[x] != x)
+			{
+				int u = find(p[x]);
+				d[x] += d[p[x]];
+				p[x] = u;
+			}
+			return p[x];
+		}
+
+		// 初始化，假定节点编号是1~n
+		for (int i = 1; i <= n; i ++ )
+		{
+			p[i] = i;
+			d[I] = 0;
+		}
+
+		// 合并a和b所在的两个集合：
+		p[find(a)] = find(b);
+		d[find(a)] = distance; // 根据具体问题，初始化find(a)的偏移量
+```
+
+
+
 优化方法：
 
-- 按秩合并
-- 路径压缩
+- 按秩（zhi,第四声）合并-----每次将比较矮的树，接到比较高的树下面
+- 路径压缩（这种比较多，通过路径压缩后，几乎可以看成O(1)的时间复杂度）----遍历一次后，将路径上所有节点都接到根节点下面去
 
 参考资料：https://www.cnblogs.com/MrSaver/p/9607552.html
 
@@ -622,21 +745,103 @@ https://www.bilibili.com/video/BV1jb411V78H?from=search&seid=789489790236522154
 
 ### 堆
 
-01:09:00 开始讲
+01:10:00 开始讲
+
+堆是一个完全二叉树
+
+完全二叉树：除了最下面一层，树都是满的，最后一层从左到右排列
+
+
+
+存储：一维数组存储,x的左儿子：2x；x的右儿子：2x+ 1
+
+
+
+小顶堆
+
+大顶堆
+
+通过down和up操作来实现以下五个操作 
 
 - 如何手写一个堆
 
-  - 插入一个数
+  - 插入一个数: `heap[++size] =x; up(size);`
 
-  - 求集合当中的最小值
+  - 求集合当中的最小值:`heap[1]`;
 
-  - 删除最小值
+  - 删除最小值:`heap[1]= heap[size];size--;down(1);`
 
-  - 删除任意一个数
+  - 删除任意一个数:`heap[k] = heap[size];size--;down(k);up(k);`
 
-  - 修改任意一个数
+  - 修改任意一个数:`heap[k] = x; down(k);up(k);`
 
-    
+
+
+
+```c++
+	// h[N]存储堆中的值, h[1]是堆顶，x的左儿子是2x, 右儿子是2x + 1
+	// ph[k]存储第k个插入的点在堆中的位置
+	// hp[k]存储堆中下标是k的点是第几个插入的
+	int h[N], ph[N], hp[N], size;
+
+	// 交换两个点，及其映射关系
+	void heap_swap(int a, int b)
+	{
+		swap(ph[hp[a]],ph[hp[b]]);
+		swap(hp[a], hp[b]);
+		swap(h[a], h[b]);
+	}
+
+	void down(int u)
+	{
+		int t = u;
+		if (u * 2 <= size && h[u * 2] < h[t]) t = u * 2;
+		if (u * 2 + 1 <= size && h[u * 2 + 1] < h[t]) t = u * 2 + 1;
+		if (u != t)
+		{
+			heap_swap(u, t);
+			down(t);
+		}
+	}
+
+	void up(int u)
+	{
+		while (u / 2 && h[u] < h[u / 2])
+		{
+			heap_swap(u, u / 2);
+			u >>= 1;
+		}
+	}
+	
+	// O(n)建堆
+	for (int i = n / 2; i; i -- ) down(i);
+```
+
+
+
+### 第三节内容
+
+### hash表（00:00:00---01:12:00）
+
+离散化是一种特殊的hash方式，该如何理解？
+
+存储结构：开放寻址法、拉链法
+
+
+
+字符串哈希方式：字符串前缀哈希法 
+
+场景：
+
+可以去看java String的hashcode方法
+
+
+
+STL(01:16:00---02:12:00)
+
+
+
+
 
 ## 搜索与图论3节（3*2 =6天）
 
